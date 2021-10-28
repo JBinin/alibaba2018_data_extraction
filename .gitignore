@@ -32,5 +32,6 @@
 *.app
 
 build
-src/*.json
-test/*.json
+compile_commands.json
+.DS_Store
+

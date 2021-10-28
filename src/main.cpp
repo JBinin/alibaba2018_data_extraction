@@ -1,6 +1,7 @@
-#include "csv2.hpp"
+#include <iostream>
 #include <vector>
-using namespace csv2;
-
+using namespace std;
 int main() {
+  vector<int> vec;
+  cout << "hello" << endl;
 }
