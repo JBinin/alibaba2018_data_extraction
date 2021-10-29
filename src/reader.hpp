@@ -22,24 +22,28 @@ public:
   Reader<delimiter<','>, quote_character<'"'>, first_row_is_header<false>,
          trim_policy::trim_whitespace>
       csv;
-  using RowIteratorType = Reader<delimiter<','>, quote_character<'"'>, first_row_is_header<false>,
-         trim_policy::trim_whitespace>::RowIterator;
+  using RowIteratorType =
+      Reader<delimiter<','>, quote_character<'"'>, first_row_is_header<false>,
+             trim_policy::trim_whitespace>::RowIterator;
   RowIteratorType *p_rows;
   // the path of the usage container csv file
   std::string csvfilename;
+  std::string dir;
 
   std::vector<std::string> vec_time_stamp;
   std::vector<std::string> vec_cpu_util_percent;
   std::queue<data_type> que;
 
-  Csv_Reader() {
-    p_rows = nullptr;
-  }
-  ~Csv_Reader() {
-    delete p_rows;
-  }
-  bool initfile(std::string filename) {
-    csvfilename = filename;
+  Csv_Reader() { p_rows = nullptr; }
+  ~Csv_Reader() { delete p_rows; }
+  bool initfile(std::string data_dir, std::string filename = "") {
+    if (data_dir.back() == '/') {
+      data_dir = data_dir.substr(0, data_dir.size() - 1);
+    }
+    dir = data_dir;
+    csvfilename = dir + "/container_usage.csv";
+    if (!filename.empty())
+      csvfilename = filename;
     if (csv.mmap(csvfilename)) {
       p_rows = new RowIteratorType(csv.begin());
       return true;
@@ -90,7 +94,7 @@ public:
     // store 1000 file in one dictory
     int dirctory_size = 1000;
     int index = container_id / dirctory_size;
-    std::string save_director = "./partion_" + std::to_string(index);
+    std::string save_director = dir + "/merged" + "/partion_" + std::to_string(index);
     std::string file_path =
         save_director + "/" + std::to_string(container_id) + ".csv";
     return file_path;
