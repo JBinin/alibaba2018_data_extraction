@@ -18,6 +18,8 @@ int main() {
 
   auto end = std::chrono::high_resolution_clock::now();
 
+  resort.output(71477 - 1);
+
   std::cout
       << std::setprecision(2)
       << std::chrono::duration<double, std::ratio<60>>(end - start).count()

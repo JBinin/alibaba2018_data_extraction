@@ -2,6 +2,8 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
+#include <map>
 #include <string>
 #include <thread>
 #include <vector>
@@ -79,6 +81,12 @@ public:
   std::mutex m_lock;
   int container_id_l;
   int container_id_h;
+
+  std::vector<int> container_not_exist;
+  std::map<int, double> container_part_data_missing;
+  std::mutex m_not_exit;
+  std::mutex m_data_missing;
+
   Resort(std::string root_path, int container_id_l = 0,
          int container_id_h = 2147483647, int thread_count = 24)
       : root_path(root_path), container_id_l(container_id_l),
@@ -110,12 +118,12 @@ public:
   void sort_files(int size) {
     while (true) {
       m_lock.lock();
-      if (container_id_l > container_id_h) {
+      if (container_id_l >= container_id_h) {
         m_lock.unlock();
         return;
       }
       int l = container_id_l;
-      int h = container_id_l + size;
+      int h = std::min(container_id_l + size, container_id_h);
       container_id_l = h;
 
       m_lock.unlock();
@@ -131,6 +139,10 @@ public:
 
     std::ifstream infile(file_path);
     if (!infile.is_open()) {
+      // conainer not exist
+      m_not_exit.lock();
+      container_not_exist.push_back(container_id);
+      m_not_exit.unlock();
       return;
     }
     std::vector<std::vector<std::string>> time_stamps;
@@ -157,6 +169,44 @@ public:
     for (int i = 0; i < result.size(); ++i)
       outfile << result[i] << std::endl;
     outfile.close();
+
+    // if data is not complete
+    // 8 days [86400, 777600)
+    // (777600 - 86400) / 10 = 69120
+    if (result.size() != 69120) {
+      m_data_missing.lock();
+      container_part_data_missing[container_id] = result.size() / 69120.0;
+      m_data_missing.unlock();
+    }
+  }
+
+  void output(int total) {
+    std::sort(container_not_exist.begin(), container_not_exist.end());
+    std::string outfile = root_path + "/container_not_exist.csv";
+    std::ofstream out1(outfile);
+    for (auto it = container_not_exist.begin(); it != container_not_exist.end();
+         it++) {
+      out1 << *it << std::endl;
+    }
+    out1.close();
+
+    std::cout << "Actually get " << total - container_not_exist.size() << " / "
+              << total << " container data." << std::endl;
+    std::cout << "See detail in :" << outfile << std::endl;
+
+    outfile = root_path + "/container_part_data_missing.csv";
+    std::ofstream out2(outfile);
+    for (auto it = container_part_data_missing.begin();
+         it != container_part_data_missing.end(); ++it) {
+      out2 << it->first << "," << int(it->second * 100) << std::endl;
+    }
+    out2.close();
+
+    std::cout << "Actually get "
+              << total - container_part_data_missing.size() -
+                     container_not_exist.size()
+              << " / " << total << " complete container data." << std::endl;
+    std::cout << "See detail in :" << outfile << std::endl;
   }
 
   std::string get_container_path(int container_id) {
