@@ -32,20 +32,11 @@ TEST(Csv_ReaderTest, write) {
   std::string file_path = "../../test_data/data1.csv";
   Csv_Reader csv_reader;
   bool init_success = csv_reader.initfile("../../test_data", file_path);
-
-  int next_container_id = csv_reader.get_next_containerid();
-  EXPECT_EQ(next_container_id, 10003);
-
-  csv_reader.reader_container(next_container_id);
-
-  std::string save_file;
-  save_file = csv_reader.save_file_path(next_container_id);
+  csv_reader.read_and_merge();
 
   std::string expect_save_file = "../../test_data/merged/partion_10/10003.csv";
-  EXPECT_EQ(expect_save_file, save_file);
-  csv_reader.writer_container(next_container_id);
 
-  std::ifstream infile(save_file);
+  std::ifstream infile(expect_save_file);
   EXPECT_TRUE(infile.is_open());
 
   std::string time_stamp, cpu_util_percent;
@@ -54,6 +45,7 @@ TEST(Csv_ReaderTest, write) {
   EXPECT_EQ(time_stamp, std::string("220740,220750"));
   EXPECT_EQ(cpu_util_percent, std::string("20,20"));
   // after test: delete the file which produced by test
+  int next_container_id = 10003;
   EXPECT_TRUE(csv_reader.delete_file(next_container_id));
 }
 
@@ -119,7 +111,7 @@ TEST(ResortTest, sort_files) {
   int size = 3;
   int index = 10004;
 
-  Resort rsort("../../test_data", index - 1, index + 3);
+  Resort rsort("../../test_data", index - 1000, index + size);
   rsort.sort(1);
 
   for (int i = 0; i < size; ++i) {

@@ -1,10 +1,10 @@
 #include <algorithm>
 #include <cstdio>
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <thread>
 #include <vector>
-
 class LoserTree {
 public:
   int n;
@@ -108,19 +108,21 @@ public:
   // sort files
   // size: file counts for each invocation
   void sort_files(int size) {
-    m_lock.lock();
-    if (container_id_l > container_id_h) {
+    while (true) {
+      m_lock.lock();
+      if (container_id_l > container_id_h) {
+        m_lock.unlock();
+        return;
+      }
+      int l = container_id_l;
+      int h = container_id_l + size;
+      container_id_l = h;
+
       m_lock.unlock();
-      return;
-    }
-    int l = container_id_l;
-    int h = container_id_l + size;
-    container_id_l = h;
 
-    m_lock.unlock();
-
-    for (int i = l; i < h; ++i) {
-      sort_one_file(i);
+      for (int i = l; i < h; ++i) {
+        sort_one_file(i);
+      }
     }
   }
 
@@ -147,6 +149,10 @@ public:
     loset.merge_sort(result);
     // save sorted file
     std::string save_file = get_container_save_path(container_id);
+    // create directory if not exist
+    std::filesystem::path p(save_file);
+    std::filesystem::create_directory(p.parent_path());
+
     std::ofstream outfile(save_file);
     for (int i = 0; i < result.size(); ++i)
       outfile << result[i] << std::endl;

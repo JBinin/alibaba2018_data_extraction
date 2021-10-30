@@ -1,5 +1,6 @@
 #include "csv2.hpp"
 #include <cstdio>
+#include <filesystem>
 #include <fstream>
 #include <queue>
 #include <string>
@@ -50,6 +51,17 @@ public:
     }
     return false;
   }
+
+  // read all container data
+  // save the same container_id data in same file
+  void read_and_merge() {
+    int next_container = -1;
+    while ((next_container = get_next_containerid()), next_container != -1) {
+      reader_container(next_container);
+      writer_container(next_container);
+    }
+  }
+
   // get the next data's container_id
   // if all data has to be accessed, return -1
   int get_next_containerid() {
@@ -81,6 +93,11 @@ public:
 
   void writer_container(int container_id) {
     std::string file_path = save_file_path(container_id);
+
+    // if dirctory is not exist, create it
+    std::filesystem::path p(file_path);
+    std::filesystem::create_directory(p.parent_path());
+
     std::ofstream stream(file_path, std::ios::app);
     Writer<delimiter<','>> writer(stream);
     writer.write_row(vec_time_stamp);
