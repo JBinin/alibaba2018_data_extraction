@@ -53,9 +53,8 @@ TEST(Csv_ReaderTest, write) {
   infile.close();
   EXPECT_EQ(time_stamp, std::string("220740,220750"));
   EXPECT_EQ(cpu_util_percent, std::string("20,20"));
-
   // after test: delete the file which produced by test
-  csv_reader.delete_file(next_container_id);
+  EXPECT_TRUE(csv_reader.delete_file(next_container_id));
 }
 
 TEST(LoserTreeTest, merge_sort) {
@@ -100,7 +99,8 @@ TEST(ResortTest, get_path) {
 TEST(ResortTest, sort_one_file) {
   Resort rsort("../../test_data");
   int container_id = 10004;
-  EXPECT_EQ("../../test_data/merged/partion_10/10004.csv", rsort.get_container_path(container_id));
+  EXPECT_EQ("../../test_data/merged/partion_10/10004.csv",
+            rsort.get_container_path(container_id));
   rsort.sort_one_file(container_id);
   std::string save_path = rsort.get_container_save_path(container_id);
   std::ifstream infile(save_path);
@@ -117,20 +117,24 @@ TEST(ResortTest, sort_one_file) {
 
 TEST(ResortTest, sort_files) {
   int size = 3;
-  int index = 10003;
+  int index = 10004;
 
-  Resort rsort("./data");
-  rsort.sort_files();
+  Resort rsort("../../test_data", index - 1, index + 3);
+  rsort.sort(1);
 
   for (int i = 0; i < size; ++i) {
     std::string file_path = rsort.get_container_save_path(index + i);
     std::ifstream infile(file_path);
+    EXPECT_TRUE(infile.is_open());
     std::string line;
     for (int j = 1; j <= 15; ++j) {
+      infile >> line;
       std::string time_stamp = std::to_string(j);
       std::string cpu_util_percent = std::to_string(j * 10);
       EXPECT_EQ(line, time_stamp + "," + cpu_util_percent);
     }
     infile.close();
   }
+  for (int i = 0; i < size; ++i)
+    EXPECT_TRUE(rsort.delete_file(index + i));
 }

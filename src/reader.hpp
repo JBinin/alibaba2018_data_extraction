@@ -94,17 +94,19 @@ public:
     // store 1000 file in one dictory
     int dirctory_size = 1000;
     int index = container_id / dirctory_size;
-    std::string save_director = dir + "/merged" + "/partion_" + std::to_string(index);
+    std::string save_director =
+        dir + "/merged" + "/partion_" + std::to_string(index);
     std::string file_path =
         save_director + "/" + std::to_string(container_id) + ".csv";
     return file_path;
   }
 
-  // delete the result file of container_id
-  // this fucntion is used by test
-  void delete_file(int container_id) {
+  // delete the result file of container_id, return true if success or false for
+  // failure this fucntion is used by test
+  bool delete_file(int container_id) {
     std::string file_path = save_file_path(container_id);
-    remove(file_path.c_str());
+    int flag = std::remove(file_path.c_str());
+    return flag == 0;
   }
 
 private:

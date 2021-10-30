@@ -1,7 +1,10 @@
 #include <algorithm>
+#include <cstdio>
 #include <fstream>
 #include <string>
+#include <thread>
 #include <vector>
+
 class LoserTree {
 public:
   int n;
@@ -73,15 +76,54 @@ class Resort {
 public:
   std::string root_path;
   int thread_count;
-  Resort(std::string root_path, int thread_count = 24)
-      : root_path(root_path), thread_count(thread_count) {
+  std::mutex m_lock;
+  int container_id_l;
+  int container_id_h;
+  Resort(std::string root_path, int container_id_l = 0,
+         int container_id_h = 2147483647, int thread_count = 24)
+      : root_path(root_path), container_id_l(container_id_l),
+        container_id_h(container_id_h), thread_count(thread_count) {
     if (this->root_path.back() == '/') {
       this->root_path = this->root_path.substr(0, this->root_path.size() - 1);
     }
   }
-  
-  void sort_files() {}
-  
+
+  // sort range [id_from, id_to)
+  // implement in multi thread
+  void sort(int size = 10, int id_from = 0, int id_to = 0) {
+    if (id_from != 0 or id_to != 0) {
+      container_id_l = id_from;
+      container_id_h = id_to;
+    }
+    std::vector<std::thread> threads;
+    for (int i = 0; i < thread_count; ++i) {
+      threads.push_back(std::thread(&Resort::sort_files, this, size));
+    }
+
+    for (int i = 0; i < threads.size(); ++i) {
+      threads[i].join();
+    }
+  }
+
+  // sort files
+  // size: file counts for each invocation
+  void sort_files(int size) {
+    m_lock.lock();
+    if (container_id_l > container_id_h) {
+      m_lock.unlock();
+      return;
+    }
+    int l = container_id_l;
+    int h = container_id_l + size;
+    container_id_l = h;
+
+    m_lock.unlock();
+
+    for (int i = l; i < h; ++i) {
+      sort_one_file(i);
+    }
+  }
+
   void sort_one_file(int container_id) {
     std::string file_path = get_container_path(container_id);
 
@@ -98,7 +140,7 @@ public:
       std::getline(infile, line);
       cpu_util_percents.push_back(split_str(line));
     }
-    
+
     // sort
     std::vector<std::string> result;
     LoserTree loset(time_stamps, cpu_util_percents);
@@ -106,8 +148,8 @@ public:
     // save sorted file
     std::string save_file = get_container_save_path(container_id);
     std::ofstream outfile(save_file);
-    for(int i = 0; i < result.size(); ++i)
-      outfile << result[i]  << std::endl;
+    for (int i = 0; i < result.size(); ++i)
+      outfile << result[i] << std::endl;
     outfile.close();
   }
 
@@ -121,6 +163,15 @@ public:
            std::to_string(container_id / 1000) + "/" +
            std::to_string(container_id) + ".csv";
   }
+
+  // delete the sorted file, return true if success or false for failure
+  // for test
+  bool delete_file(int container_id) {
+    std::string save_file = get_container_save_path(container_id);
+    int flag = std::remove(save_file.c_str());
+    return flag == 0;
+  }
+
   std::vector<std::string> split_str(std::string str, std::string sep = ",") {
     std::vector<std::string> vec;
     if (str.empty())
