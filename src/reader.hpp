@@ -12,10 +12,11 @@ public:
   std::string container_id;
   std::string time_stamp;
   std::string cpu_util_percent;
+  std::string mem_util_percent;
   data_type(std::string container_id, std::string time_stamp,
-            std::string cpu_util_percent)
+            std::string cpu_util_percent, std::string mem_util_percent)
       : container_id(container_id), time_stamp(time_stamp),
-        cpu_util_percent(cpu_util_percent) {}
+        cpu_util_percent(cpu_util_percent), mem_util_percent(mem_util_percent) {}
 };
 
 class Csv_Reader {
@@ -33,6 +34,7 @@ public:
 
   std::vector<std::string> vec_time_stamp;
   std::vector<std::string> vec_cpu_util_percent;
+  std::vector<std::string> vec_mem_util_percent;
   std::queue<data_type> que;
 
   Csv_Reader() { p_rows = nullptr; }
@@ -86,6 +88,7 @@ public:
       } else {
         vec_time_stamp.push_back(data.time_stamp);
         vec_cpu_util_percent.push_back(data.cpu_util_percent);
+        vec_mem_util_percent.push_back(data.mem_util_percent);
         que.pop();
       }
     }
@@ -102,9 +105,11 @@ public:
     Writer<delimiter<','>> writer(stream);
     writer.write_row(vec_time_stamp);
     writer.write_row(vec_cpu_util_percent);
+    writer.write_row(vec_mem_util_percent);
     stream.close();
     vec_time_stamp.clear();
     vec_cpu_util_percent.clear();
+    vec_mem_util_percent.clear();
   }
 
   std::string save_file_path(int container_id) {
@@ -164,7 +169,7 @@ private:
 
       if (container_id.empty())
         continue;
-      data_type data(container_id, time_stamp, cpu_util_percent);
+      data_type data(container_id, time_stamp, cpu_util_percent, mem_util_percent);
       que.push(data);
 
       index++;
