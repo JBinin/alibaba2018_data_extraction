@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 # set the project name
-project(alibaba2018_data_extration)
+project(alibaba2018_data_extraction)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
