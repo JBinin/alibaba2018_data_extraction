@@ -168,7 +168,7 @@ public:
 
     std::ofstream outfile(save_file);
     for (int i = 0; i < result.size(); ++i)
-      outfile << result[i] << std::endl;
+      outfile << result[i] << "/n";
     outfile.close();
 
     // if data is not complete
@@ -187,7 +187,7 @@ public:
     std::ofstream out1(outfile);
     for (auto it = container_not_exist.begin(); it != container_not_exist.end();
          it++) {
-      out1 << *it << std::endl;
+      out1 << *it << "/n";
     }
     out1.close();
 
@@ -199,7 +199,7 @@ public:
     std::ofstream out2(outfile);
     for (auto it = container_part_data_missing.begin();
          it != container_part_data_missing.end(); ++it) {
-      out2 << it->first << "," << int(it->second * 100) << std::endl;
+      out2 << it->first << "," << int(it->second * 100) << "/n";
     }
     out2.close();
 
