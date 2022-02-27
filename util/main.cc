@@ -59,7 +59,7 @@ void hole_file(std::string filename, int cpu_request, double mem_size, std::stri
     int end = 777600;
     int step = 10;
 
-    std::vector<int> cpu_requests((end - start) / step, 0);
+    std::vector<double> cpu_requests((end - start) / step, 0);
     std::vector<double> mem_sizes((end - start) / step, 0.0);
 
     std::ifstream in(filename);
@@ -74,7 +74,7 @@ void hole_file(std::string filename, int cpu_request, double mem_size, std::stri
             auto pos2 = line.find(',', pos1 + 1);
             if (!line.substr(pos1 + 1, pos2 - pos1 - 1).empty()) {
                 int cpu_util_percent = std::stoi(line.substr(pos1 + 1, pos2 - pos1 - 1));
-                cpu_requests[index] = cpu_util_percent * cpu_request / 96;
+                cpu_requests[index] = cpu_util_percent / 100.0 * cpu_request / 96;
             }
 
             if(!line.substr(pos2 + 1).empty()) {
@@ -97,6 +97,9 @@ void hole_file(std::string filename, int cpu_request, double mem_size, std::stri
         if (out.is_open()) {
             out << std::fixed << std::setprecision(2);
             for(int i = 0; i <cpu_requests.size(); ++i) {
+                if(cpu_requests[i] > 100 or mem_sizes[i] > 100) {
+                    std::cout << savefilename << std::endl;
+                }
                 out << cpu_requests[i] << "," << mem_sizes[i] << "\n";
             }
             out.close();
