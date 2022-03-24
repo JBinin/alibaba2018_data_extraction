@@ -74,11 +74,17 @@ void hole_file(std::string filename, int cpu_request, double mem_size, std::stri
             auto pos2 = line.find(',', pos1 + 1);
             if (!line.substr(pos1 + 1, pos2 - pos1 - 1).empty()) {
                 int cpu_util_percent = std::stoi(line.substr(pos1 + 1, pos2 - pos1 - 1));
+                if(cpu_util_percent < 0 or cpu_util_percent > 100) {
+                  cpu_util_percent = 0;
+                } 
                 cpu_requests[index] = cpu_util_percent / 100.0 * cpu_request / 96;
             }
 
             if(!line.substr(pos2 + 1).empty()) {
                 int mem_util_percent = std::stoi(line.substr(pos2 + 1));
+                if(mem_util_percent < 0 or mem_util_percent > 100) {
+                  mem_util_percent = 0;
+                }
                 mem_sizes[index] = mem_util_percent * mem_size / 100;
 
                 if(last_index + 1 < index and last_index != -1) {
